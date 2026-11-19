@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&display=swap" rel="stylesheet">
+<title>Enzo · AI Health Assistant</title>
+<style>
+  :root { --bg:#ffffff; --page:#ffffff; --text:#0a0a0a; --muted:#6b6b6b; --border:#0a0a0a; --soft:#dcdcdc; --botBg:#f2f2f2; --userBg:#0a0a0a; --userText:#ffffff; --btnBg:#0a0a0a; --btnText:#ffffff; --frame:#0a0a0a; --frameLine:#0a0a0a; color-scheme: light; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0a0a0a; --page:#000000; --text:#f5f5f5; --muted:#9a9a9a; --border:#f5f5f5; --soft:#2e2e2e; --botBg:#1a1a1a; --userBg:#f5f5f5; --userText:#0a0a0a; --btnBg:#f5f5f5; --btnText:#0a0a0a; --frame:#141414; --frameLine:#2e2e2e; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { height: 100dvh; font: 16px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; background: var(--page); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 18px; padding: 0 16px 20px; }
+  button { font: inherit; cursor: pointer; }
+
+  .announce { background: #ffffff; color: #000000; font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-weight: 400; font-size: 28px; line-height: 1.15; letter-spacing: -.01em; text-wrap: balance; text-align: center; padding: 22px 20px 24px; width: calc(100% + 32px); margin: 0 -16px; border-radius: 0 0 32px 32px; box-shadow: 0 10px 30px rgba(0,0,0,.10); }
+
+  .device { width: min(410px, 100%); flex: 1 1 auto; min-height: 0; max-height: 800px; padding: 10px; display: flex; background: var(--frame); border: 1px solid var(--frameLine); border-radius: 48px; box-shadow: 0 24px 60px rgba(0,0,0,.22); }
+  .app { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); border-radius: 38px; overflow: hidden; }
+  @media (max-width: 440px) {
+    .device { padding: 0; background: none; border: 0; box-shadow: none; border-radius: 0; }
+    .app { border: 1.5px solid var(--border); border-radius: 32px; }
+  }
+
+  header { display: flex; justify-content: center; padding: 18px 16px 14px; border-bottom: 1px solid var(--soft); }
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .avatar-wrap { position: relative; }
+  .avatar { flex: none; width: 64px; height: 64px; padding: 0; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); display: grid; place-items: center; overflow: hidden; }
+  .avatar:hover { background: var(--text); color: var(--bg); }
+  .avatar svg { width: 58%; height: 58%; }
+  .avatar img { display: none; width: 100%; height: 100%; object-fit: cover; }
+  .avatar.has-img img { display: block; }
+  .avatar.has-img svg { display: none; }
+  .brand h1 { font-family: "Instrument Serif", Georgia, serif; font-size: 27px; font-weight: 400; letter-spacing: -.01em; margin: 0; line-height: 1; display: flex; align-items: center; gap: 8px; }
+  .dot { position: absolute; right: 2px; bottom: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text); border: 2.5px solid var(--bg); }
+  .dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--text); animation: pulse 2.2s ease-out infinite; }
+  @keyframes pulse { from { transform: scale(1); opacity: .45; } to { transform: scale(3); opacity: 0; } }
+
+  #log { flex: 1; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin; scrollbar-color: var(--soft) transparent; }
+  .msg { max-width: 84%; padding: 11px 15px; border-radius: 20px; overflow-wrap: anywhere; animation: pop .28s ease both; }
+  .bot { background: var(--botBg); align-self: flex-start; border-bottom-left-radius: 6px; }
+  .user { background: var(--userBg); color: var(--userText); align-self: flex-end; border-bottom-right-radius: 6px; white-space: pre-wrap; }
+  .bot p { margin: 0 0 .55em; white-space: pre-line; }
+  .bot ul, .bot ol { margin: .2em 0 .55em; padding-left: 1.25em; }
+  .bot li { margin: .15em 0; }
+  .bot code { font-family: ui-monospace, Menlo, monospace; font-size: .9em; background: var(--soft); border-radius: 5px; padding: 1px 5px; }
+  .bot > div > :last-child { margin-bottom: 0; }
+  .alert { background: var(--bg); border: 3px solid var(--border); }
+  .alert-label { display: inline-block; background: var(--text); color: var(--bg); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 8px; }
+  .typing { display: flex; gap: 5px; padding: 7px 2px; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text); animation: blink 1.1s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: .15s; }
+  .typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .2; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .msg, .typing span, .dot::after { animation: none; } }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; margin-top: 2px; }
+  .chips[hidden] { display: none; }
+  .chip { background: transparent; color: var(--text); border: 1.5px solid var(--soft); border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 500; transition: background .15s, color .15s, border-color .15s; }
+  .chip:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  form { padding: 10px 14px 6px; }
+  .bar { display: flex; align-items: flex-end; gap: 8px; border: 1.5px solid var(--soft); border-radius: 26px; padding: 6px 6px 6px 18px; background: var(--bg); transition: border-color .15s, box-shadow .15s; }
+  .bar:focus-within { border-color: var(--border); box-shadow: 0 0 0 4px color-mix(in srgb, var(--text) 8%, transparent); }
+  textarea { flex: 1; resize: none; font: inherit; color: var(--text); background: transparent; border: 0; outline: 0; padding: 8px 0; max-height: 120px; }
+  textarea::placeholder { color: var(--muted); }
+  .send { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--btnBg); color: var(--btnText); display: grid; place-items: center; transition: opacity .2s, transform .1s; }
+  .send:active { transform: scale(.94); }
+  .send.idle { opacity: .22; }
+  .send:disabled { opacity: .4; cursor: default; }
+  .note { font-size: 11.5px; line-height: 1.4; color: var(--muted); text-align: center; padding: 0 22px calc(14px + env(safe-area-inset-bottom, 0px)); }
+</style>
+</head>
+<body>
+<div class="announce">Your personal health assistant</div>
+<div class="device">
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="avatar-wrap">
+        <button class="avatar" id="profile" type="button" aria-label="Profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          <!-- To use your own icon, save it as public/profile.png (or .jpg and change the src below). -->
+          <img src="profile.png" alt="" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">
+        </button>
+        <span class="dot" aria-hidden="true"></span>
+      </div>
+      <h1>Enzo</h1>
+    </div>
+  </header>
+  <div id="log" aria-live="polite"></div>
+  <div class="chips" id="chips" aria-label="Try asking">
+    <button type="button" class="chip" data-q="I've had a headache for 3 days. What could cause it?">Headache for 3 days</button>
+    <button type="button" class="chip" data-q="Give me practical tips for better sleep.">Better sleep tips</button>
+    <button type="button" class="chip" data-q="What does high blood pressure mean?">What is high blood pressure?</button>
+    <button type="button" class="chip" data-q="Help me prepare questions for a doctor visit.">Prep for a doctor visit</button>
+  </div>
+  <form id="form">
+    <div class="bar">
+      <textarea id="input" rows="1" placeholder="Ask a health question…" maxlength="2000"></textarea>
+      <button class="send idle" id="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+  </form>
+  <div class="note">General health information only, not medical advice. In an emergency, contact your local emergency number.</div>
+</div>
+</div>
+<script>
+  const log = document.getElementById("log");
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+  const send = document.getElementById("send");
+  const chips = document.getElementById("chips");
+  const GREETING = "Hi, I'm Enzo. Tell me what's on your mind: symptoms, medications, sleep, nutrition, or questions for your next appointment.";
+  const ALERTS = {
+    emergency: "Possible emergency",
+    self_harm: "You're not alone",
+  };
+
+  function syncSend() { send.classList.toggle("idle", !input.value.trim()); }
+
+  function newId() { return crypto.randomUUID(); }
+  let sessionId = newId();
+
+  // ---- tiny, safe markdown renderer (builds DOM nodes, never uses innerHTML) ----
+  function inline(parent, text) {
+    for (const part of text.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*\n]+\*)/)) {
+      if (!part) continue;
+      let node;
+      if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) {
+        node = document.createElement("strong"); node.textContent = part.slice(2, -2);
+      } else if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) {
+        node = document.createElement("code"); node.textContent = part.slice(1, -1);
+      } else if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) {
+        node = document.createElement("em"); node.textContent = part.slice(1, -1);
+      } else {
+        node = document.createTextNode(part);
+      }
+      parent.appendChild(node);
+    }
+  }
+
+  function renderRich(el, text) {
+    el.textContent = "";
+    let list = null, listType = null, para = [];
+    const flushPara = () => {
+      if (!para.length) return;
+      const p = document.createElement("p");
+      inline(p, para.join("\n"));
+      el.appendChild(p);
+      para = [];
+    };
+    for (const raw of text.replace(/\r/g, "").split("\n")) {
+      const line = raw.trimEnd();
+      const b = line.match(/^\s*[*\-•]\s+(.*)$/);
+      const n = line.match(/^\s*\d+[.)]\s+(.*)$/);
+      if (b || n) {
+        flushPara();
+        const type = b ? "ul" : "ol";
+        if (!list || listType !== type) {
+          list = document.createElement(type); listType = type; el.appendChild(list);
+        }
+        const li = document.createElement("li");
+        inline(li, (b || n)[1]);
+        list.appendChild(li);
+      } else if (!line.trim()) {
+        flushPara(); list = null; listType = null;
+      } else {
+        list = null; listType = null; para.push(line.trim());
+      }
+    }
+    flushPara();
+  }
+
+  function add(role, text) {
+    const el = document.createElement("div");
+    el.className = "msg " + role;
+    if (role === "bot") {
+      el.body = document.createElement("div");
+      el.appendChild(el.body);
+      if (text) renderRich(el.body, text);
+    } else {
+      el.textContent = text;
+    }
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+    return el;
+  }
+
+  function showTyping(bubble) {
+    bubble.body.className = "typing";
+    bubble.body.textContent = "";
+    for (let i = 0; i < 3; i++) bubble.body.appendChild(document.createElement("span"));
+  }
+
+  function markAlert(bubble, flag) {
+    bubble.classList.add("alert");
+    const label = document.createElement("div");
+    label.className = "alert-label";
+    label.textContent = ALERTS[flag] || "Important";
+    bubble.insertBefore(label, bubble.body);
+  }
+
+  function showGreeting() {
+    log.textContent = "";
+    add("bot", GREETING);
+    chips.hidden = false;
+    log.appendChild(chips);
+  }
+
+  async function ask(message) {
+    chips.hidden = true;
+    add("user", message);
+    const bubble = add("bot", "");
+    showTyping(bubble);
+    send.disabled = true;
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, message }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        bubble.body.className = "";
+        renderRich(bubble.body, data.error || "Something went wrong. Please try again.");
+        return;
+      }
+      const flag = res.headers.get("X-Enzo-Safety");
+      if (flag) markAlert(bubble, flag);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let text = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+        bubble.body.className = "";
+        renderRich(bubble.body, text);
+        log.scrollTop = log.scrollHeight;
+      }
+    } catch {
+      bubble.body.className = "";
+      renderRich(bubble.body, "Couldn't reach Enzo. Check your connection and try again.");
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message || send.disabled) return;
+    input.value = "";
+    input.style.height = "auto";
+    syncSend();
+    ask(message);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+  });
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 120) + "px";
+    syncSend();
+  });
+
+  chips.addEventListener("click", (e) => {
+    const b = e.target.closest(".chip");
+    if (b && !send.disabled) ask(b.dataset.q);
+  });
+
+
+  showGreeting();
+</script>
+</body>
+</html>
